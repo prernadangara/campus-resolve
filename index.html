@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>College Complaint Portal</title>
+    <style>
+        #toast { visibility: hidden; min-width: 280px; background-color: #333; color: #fff; text-align: center; border-radius: 15px; padding: 16px; position: fixed; z-index: 1000; right: 20px; bottom: 20px; font-weight: 800; transition: 0.3s; }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 20px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 20px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8">
+    <div id="toast">Notification</div>
+
+    <div id="auth-container" class="max-w-md mx-auto bg-white p-10 rounded-[40px] shadow-2xl mt-10 border-t-8 border-indigo-600">
+        <h2 id="auth-title" class="text-3xl font-black text-center mb-8 uppercase italic tracking-tighter">Student Hub</h2>
+        <div class="space-y-4">
+            <input type="email" id="email" placeholder="Email" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-indigo-500 font-bold">
+            <input type="password" id="password" placeholder="Password" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-indigo-500 font-bold">
+            <button onclick="handleAuth()" id="auth-btn" class="w-full bg-indigo-600 text-white p-5 rounded-2xl font-black shadow-lg">LOGIN</button>
+            <p class="text-center text-xs font-bold text-slate-400">New? <a href="#" onclick="toggleAuth()" class="text-indigo-600 underline">Create Account</a></p>
+        </div>
+    </div>
+
+    <div id="portal-container" class="hidden max-w-2xl mx-auto space-y-6">
+        <div id="ticker-box" class="hidden bg-orange-500 text-white p-3 rounded-[20px] shadow-lg overflow-hidden border-b-4 border-orange-700">
+            <div class="flex items-center">
+                <span class="bg-white text-orange-600 px-3 py-1 rounded-full text-[10px] font-black mr-4 shadow-sm animate-pulse whitespace-nowrap">CAMPUS NEWS</span>
+                <marquee id="announcement-text" class="font-bold text-sm tracking-wide"></marquee>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-[30px] shadow-sm flex justify-between items-center border-l-8 border-indigo-600">
+            <div>
+                <h2 id="user-display" class="font-black text-slate-800 text-lg"></h2>
+                <span id="userid-display" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"></span>
+            </div>
+            <button onclick="logout()" class="bg-red-50 text-red-600 font-black px-5 py-2 rounded-2xl text-xs hover:bg-red-600 hover:text-white transition">LOGOUT</button>
+        </div>
+
+        <div class="bg-white p-8 rounded-[35px] shadow-lg border border-slate-100">
+            <h3 class="font-black text-slate-800 mb-6 uppercase italic">Lodge Complaint</h3>
+            <div class="space-y-4">
+                <select id="category" class="w-full border-2 p-4 rounded-2xl bg-slate-50 font-black outline-none focus:border-indigo-500">
+                    <option>Hostel/Maintenance</option>
+                    <option>WIFI/Internet</option>
+                    <option>Academics/Library</option>
+                    <option>Canteen/Food</option>
+                </select>
+
+                <label class="flex items-center gap-3 font-bold text-slate-700 cursor-pointer">
+                    <input type="checkbox" id="anonymous" class="w-5 h-5 accent-indigo-600">
+                    Submit this complaint anonymously
+                </label>
+                <textarea id="desc" placeholder="Details about the problem..." class="w-full border-2 p-4 rounded-2xl h-32 outline-none focus:border-indigo-500 font-bold"></textarea>
+                <button onclick="submitComplaint()" class="w-full bg-indigo-600 text-white p-5 rounded-2xl font-black shadow-xl hover:scale-[1.02] transition">SUBMIT TO ADMIN</button>
+            </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-[35px] shadow-lg border border-slate-100 mb-10">
+            <h3 class="font-black text-slate-800 mb-6 uppercase italic">My Tracking History</h3>
+            <div id="my-history" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD5BVGJYipZut7k2kFM1I3ZojgEq78cKBE",
+            authDomain: "collegeportal-318f1.firebaseapp.com",
+            projectId: "collegeportal-318f1",
+            storageBucket: "collegeportal-318f1.firebasestorage.app",
+            messagingSenderId: "430262755254",
+            appId: "1:430262755254:web:708f3fc6278744a883eb17"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        function showToast(m, c = "#4f46e5") { const t = document.getElementById("toast"); t.innerText = m; t.style.backgroundColor = c; t.className = "show"; setTimeout(() => t.className = "", 3000); }
+        
+        let isLogin = true;
+        window.toggleAuth = () => { isLogin = !isLogin; document.getElementById('auth-title').innerText = isLogin ? "Student Hub" : "New Account"; };
+        
+        window.handleAuth = async () => {
+            const e = document.getElementById('email').value, p = document.getElementById('password').value;
+            try { if(isLogin) await signInWithEmailAndPassword(auth, e, p); else await createUserWithEmailAndPassword(auth, e, p); } catch(err) { showToast(err.message, "#ef4444"); }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('portal-container').classList.remove('hidden');
+                document.getElementById('user-display').innerText = user.email.split('@')[0].toUpperCase();
+                document.getElementById('userid-display').innerText = `ID: ${user.uid.substring(0,6).toUpperCase()}`;
+                loadHistory(user.uid);
+                listenAnnouncements();
+            } else {
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('portal-container').classList.add('hidden');
+            }
+        });
+
+        window.logout = () => signOut(auth);
+
+        window.submitComplaint = async () => {
+            const desc = document.getElementById('desc').value;
+            if(!desc) return showToast("Enter details!", "#f59e0b");
+            const isAnonymous = document.getElementById('anonymous').checked;   
+            try {
+                await addDoc(collection(db, "complaints"), {
+                    uid: auth.currentUser.uid,
+                    studentID: isAnonymous ? "Anonymous" : document.getElementById('userid-display').innerText,
+                    studentName: isAnonymous ? "Anonymous" : auth.currentUser.email,
+                    category: document.getElementById('category').value,
+                    description: desc,
+                    status: "Pending",
+                    timestamp: serverTimestamp()
+                });
+                showToast("Sent! 🚀", "#059669");
+                document.getElementById('desc').value = "";
+            } catch (e) { showToast("Error connecting...", "#ef4444"); }
+        };
+
+        function listenAnnouncements() {
+            const q = query(collection(db, "announcements"), orderBy("timestamp", "desc"));
+            onSnapshot(q, (snaps) => {
+                if(!snaps.empty) {
+                    const latest = snaps.docs[0].data();
+                    document.getElementById('ticker-box').classList.remove('hidden');
+                    document.getElementById('announcement-text').innerText = latest.message;
+                }
+            });
+        }
+
+        function loadHistory(uid) {
+            onSnapshot(query(collection(db, "complaints"), where("uid", "==", uid)), (snaps) => {
+                const h = document.getElementById('my-history');
+                h.innerHTML = snaps.empty
+                    ? `<div class="text-center py-10">
+                        <p class="text-slate-800 font-black text-lg">No complaints yet.</p>
+                        <p class="text-slate-400 font-bold text-sm mt-2">Your submitted complaints will appear here.</p>
+                    </div>`
+                    : "";
+                snaps.forEach(d => {
+                    const data = d.data(); const isRes = data.status === "Resolved";
+                    h.innerHTML += `
+                        <div class="p-6 border-2 rounded-3xl bg-white ${isRes ? 'border-green-200 bg-green-50' : 'border-slate-100 shadow-sm'}">
+                            <div class="flex justify-between items-start">
+                                <div><p class="text-[10px] font-black text-indigo-500 uppercase">${data.category}</p><p class="text-slate-800 font-black mt-1">${data.description}</p></div>
+                                <span class="text-[10px] font-black px-3 py-1 rounded-full ${isRes ? 'bg-green-600 text-white' : 'bg-orange-100 text-orange-600'}">${data.status}</span>
+                            </div>
+                            ${data.adminNote ? `<div class="mt-4 text-xs font-bold text-green-700 bg-white p-3 rounded-xl border-l-4 border-green-600 shadow-sm">ADMIN: ${data.adminNote}</div>` : ""}
+                        </div>`;
+                });
+            });
+        }
+    </script>
+</body>
+</html>
