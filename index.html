@@ -10,6 +10,26 @@
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 20px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 20px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        .announcement-wrapper {
+            flex: 1;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        #announcement-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: announcement-scroll 12s linear infinite;
+        }
+
+        @keyframes announcement-scroll {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(-100%);
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen p-4 md:p-8">
@@ -29,7 +49,10 @@
         <div id="ticker-box" class="hidden bg-orange-500 text-white p-3 rounded-[20px] shadow-lg overflow-hidden border-b-4 border-orange-700">
             <div class="flex items-center">
                 <span class="bg-white text-orange-600 px-3 py-1 rounded-full text-[10px] font-black mr-4 shadow-sm animate-pulse whitespace-nowrap">CAMPUS NEWS</span>
-                <marquee id="announcement-text" class="font-bold text-sm tracking-wide"></marquee>
+
+                <div class="announcement-wrapper">
+                    <div id="announcement-text" class="font-bold text-sm tracking-wide"></div>
+                </div>
             </div>
         </div>
 
