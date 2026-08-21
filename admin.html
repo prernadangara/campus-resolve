@@ -88,18 +88,10 @@
     </div>
 
     <script type="module">
+        import { firebaseConfig } from "./config.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "YOUR API KEY HERE",
-            authDomain: "collegeportal-318f1.firebaseapp.com",
-            projectId: "collegeportal-318f1",
-            storageBucket: "collegeportal-318f1.firebasestorage.app",
-            messagingSenderId: "430262755254",
-            appId: "1:430262755254:web:708f3fc6278744a883eb17"
-        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
