@@ -90,18 +90,10 @@
     </div>
 
     <script type="module">
+        import { firebaseConfig } from "./config.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, onSnapshot, serverTimestamp, doc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "YOUR API KEY HERE",
-            authDomain: "collegeportal-318f1.firebaseapp.com",
-            projectId: "collegeportal-318f1",
-            storageBucket: "collegeportal-318f1.firebasestorage.app",
-            messagingSenderId: "430262755254",
-            appId: "1:430262755254:web:708f3fc6278744a883eb17"
-        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -119,6 +111,11 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                if (user.email === "prernadangara@gmail.com") {
+                    signOut(auth);
+                    return showToast("Admin accounts cannot access the Student Portal.", "#ef4444");
+                }
+
                 document.getElementById('auth-container').classList.add('hidden');
                 document.getElementById('portal-container').classList.remove('hidden');
                 document.getElementById('user-display').innerText = user.email.split('@')[0].toUpperCase();
