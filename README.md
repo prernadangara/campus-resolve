@@ -19,6 +19,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Local Setup](#local-setup)
 - [System Architecture](#system-architecture)
 - [Key Features](#key-features)
 - [Technologies Used](#technologies-used)
@@ -41,6 +42,16 @@ Students can submit campus-related complaints, optionally report them anonymousl
 Administrators can review complaints, filter them by category, assign priority, resolve issues and broadcast campus-wide announcements.
 
 The project demonstrates practical implementation of **authentication, cloud databases, real-time updates and database-level access control**.
+
+---
+## Local Setup
+
+1. Clone the repository.
+2. Copy `config.example.js` and rename the copy to `config.js`.
+3. Add your own Firebase project configuration to `config.js`.
+4. Run the project using a local web server such as VS Code Live Server.
+
+> **Note:** `config.js` is intentionally excluded from the repository because it contains the local Firebase configuration.
 
 ---
 
